@@ -839,28 +839,180 @@
 <!--        updateStatistics();-->
 <!--      });-->
 <!--    </script>-->
+<!--    <script>-->
+<!--      document.addEventListener('DOMContentLoaded', async () => {-->
+<!--          // Get environment from localStorage, if not present -> fetch from backend-->
+<!--          let currentEnv = localStorage.getItem('currentEnv');-->
+<!--          if (!currentEnv) {-->
+<!--              try {-->
+<!--                  const envResp = await fetch('/api/env');-->
+<!--                  if (envResp.ok) {-->
+<!--                      currentEnv = await envResp.text();-->
+<!--                      localStorage.setItem('currentEnv', currentEnv);-->
+<!--                  } else {-->
+<!--                      currentEnv = "ENV"; // default fallback-->
+<!--                  }-->
+<!--              } catch (e) {-->
+<!--                  console.warn("Could not fetch environment, defaulting to ENV");-->
+<!--                  currentEnv = "ENV";-->
+<!--              }-->
+<!--          }-->
+
+<!--          // Set environment indicator-->
+<!--          const envIndicator = document.getElementById('currentEnv');-->
+<!--          if (envIndicator) {-->
+<!--              envIndicator.textContent = currentEnv;-->
+<!--          }-->
+
+<!--          let submissions = [];-->
+
+<!--          // Fetch all submissions from API-->
+<!--          try {-->
+<!--              const response = await fetch(`/api/submissions?env=${currentEnv}`);-->
+<!--              if (!response.ok) throw new Error("Failed to fetch submissions from server");-->
+<!--              submissions = await response.json();-->
+<!--          } catch (err) {-->
+<!--              console.error("Error fetching submissions:", err);-->
+<!--              // Fallback to localStorage if API fails-->
+<!--              submissions = (JSON.parse(localStorage.getItem('changeSubmissions') || '[]'))-->
+<!--                              .filter(sub => sub.environment === currentEnv);-->
+<!--          }-->
+
+<!--          // Update statistics-->
+<!--          function updateStatistics() {-->
+<!--            document.getElementById('totalCount').textContent = submissions.length;-->
+<!--            document.getElementById('approvedCount').textContent =-->
+<!--              submissions.filter(s => (s.decision || '').toLowerCase() === 'approved').length;-->
+<!--            document.getElementById('rejectedCount').textContent =-->
+<!--              submissions.filter(s => (s.decision || '').toLowerCase() === 'rejected').length;-->
+<!--            document.getElementById('timedCount').textContent =-->
+<!--              submissions.filter(s => (s.decision || '').toLowerCase() === 'timed').length;-->
+<!--          }-->
+
+<!--          // Render submissions-->
+<!--          function renderSubmissions(filteredSubmissions = submissions) {-->
+<!--              const submissionsList = document.getElementById('submissionsList');-->
+
+<!--              if (!filteredSubmissions || filteredSubmissions.length === 0) {-->
+<!--                  submissionsList.innerHTML = `-->
+<!--                    <div class="empty-state">-->
+<!--                      <h3>No submissions found</h3>-->
+<!--                      <p>Try adjusting your search criteria or check back later for new submissions.</p>-->
+<!--                    </div>-->
+<!--                  `;-->
+<!--                  return;-->
+<!--              }-->
+
+<!--              submissionsList.innerHTML = filteredSubmissions-->
+<!--                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))-->
+<!--                .map((submission, index) => `-->
+<!--                    <div class="submission-card ${(submission.decision || '').toLowerCase()}">-->
+<!--                      <div class="submission-header">-->
+<!--                        <h3>${submission.appName || 'N/A'} <span>${submission.changeNo || 'N/A'}</span></h3>-->
+<!--                        <div class="submission-meta">-->
+<!--                          <span>${submission.approverName || 'N/A'}</span>-->
+<!--                          <span>${submission.approverEmail || 'N/A'}</span>-->
+<!--                          <span>${submission.timestamp ? new Date(submission.timestamp).toLocaleString() : 'N/A'}</span>-->
+<!--                        </div>-->
+<!--                        <span class="status-badge status-${(submission.decision || '').toLowerCase()}">-->
+<!--                          ${submission.decision || 'Pending'}-->
+<!--                        </span>-->
+<!--                      </div>-->
+<!--                      ${(submission.comments || (submission.decision || '').toLowerCase() === 'timed') ? `-->
+<!--                        <div class="comments-section">-->
+<!--                          ${(submission.decision || '').toLowerCase() === 'timed'-->
+<!--                              ? `<p>Time Window: ${submission.startTime ? new Date(submission.startTime).toLocaleString() : 'N/A'} - ${submission.endTime ? new Date(submission.endTime).toLocaleString() : 'N/A'}</p>`-->
+<!--                              : ''}-->
+<!--                          ${submission.comments ? `<p>Comments: ${submission.comments}</p>` : ''}-->
+<!--                        </div>` : ''}-->
+<!--                    </div>-->
+<!--                `).join('');-->
+<!--          }-->
+
+<!--          // Search and filter-->
+<!--          const searchInput = document.getElementById('searchInput');-->
+<!--          const statusFilter = document.getElementById('statusFilter');-->
+
+<!--          function filterSubmissions() {-->
+<!--              const searchTerm = (searchInput.value || '').toLowerCase();-->
+<!--              const statusValue = (statusFilter.value || '').toLowerCase();-->
+
+<!--              let filtered = submissions;-->
+
+<!--              if (searchTerm) {-->
+<!--                  filtered = filtered.filter(s =>-->
+<!--                      (s.appName || '').toLowerCase().includes(searchTerm) ||-->
+<!--                      (s.changeNo || '').toLowerCase().includes(searchTerm) ||-->
+<!--                      (s.approverName || '').toLowerCase().includes(searchTerm) ||-->
+<!--                      (s.approverEmail || '').toLowerCase().includes(searchTerm) ||-->
+<!--                      (s.comments || '').toLowerCase().includes(searchTerm)-->
+<!--                  );-->
+<!--              }-->
+
+<!--              if (statusValue) {-->
+<!--                  filtered = filtered.filter(s => (s.decision || '').toLowerCase() === statusValue);-->
+<!--              }-->
+
+<!--              renderSubmissions(filtered);-->
+<!--          }-->
+
+<!--          searchInput.addEventListener('input', filterSubmissions);-->
+<!--          statusFilter.addEventListener('change', filterSubmissions);-->
+
+<!--          // Initial render-->
+<!--          renderSubmissions();-->
+<!--          updateStatistics();-->
+<!--      });-->
+<!--    </script>-->
+
+
     <script>
       document.addEventListener('DOMContentLoaded', async () => {
-          // Get environment from localStorage
-          const currentEnv = localStorage.getItem('currentEnv') || "DEV";
+          // Get environment from localStorage, or fallback to /api/env
+          let currentEnv = localStorage.getItem('currentEnv');
+          if (!currentEnv) {
+              try {
+                  const envResp = await fetch('/api/env');
+                  if (envResp.ok) {
+                      currentEnv = await envResp.text();
+                      localStorage.setItem('currentEnv', currentEnv);
+                  } else {
+                      currentEnv = "ENV";
+                  }
+              } catch (e) {
+                  console.warn("Could not fetch environment, defaulting to ENV");
+                  currentEnv = "ENV";
+              }
+          }
 
           // Set environment indicator
           const envIndicator = document.getElementById('currentEnv');
-          if (envIndicator) {
-            envIndicator.textContent = currentEnv;
-          }
+          if (envIndicator) envIndicator.textContent = currentEnv;
 
           let submissions = [];
 
-          // Fetch all submissions from API
+          // Fetch from API
           try {
-<!--              const response = await fetch(`/api/submissions?env=${currentEnv}`); // assuming your API supports ?env filter-->
-              const response = await fetch(`/api/submissions`); // assuming your API supports ?env filter
+              const response = await fetch(`/api/submissions`);
               if (!response.ok) throw new Error("Failed to fetch submissions from server");
-              submissions = await response.json();
+              const rawData = await response.json();
+
+              // 🔥 Transform backend data to frontend-friendly structure
+              submissions = rawData.map(sub => ({
+                  id: sub.submissionId,
+                  appName: sub.app?.appName || "N/A",
+                  changeNo: sub.app?.changeNo || "N/A",
+                  approverName: sub.submitterName || "N/A",
+                  approverEmail: sub.submitterEmailId || "N/A",
+                  decision: sub.submitterDecision || "Pending",
+                  comments: sub.submitterComments || "",
+                  timestamp: sub.app?.startWindow || new Date().toISOString(),
+                  startTime: sub.app?.startWindow,
+                  endTime: sub.app?.endWindow
+              }));
           } catch (err) {
               console.error("Error fetching submissions:", err);
-              // Fallback to localStorage if API fails
+              // fallback to localStorage if API fails
               submissions = (JSON.parse(localStorage.getItem('changeSubmissions') || '[]'))
                               .filter(sub => sub.environment === currentEnv);
           }
@@ -869,11 +1021,11 @@
           function updateStatistics() {
             document.getElementById('totalCount').textContent = submissions.length;
             document.getElementById('approvedCount').textContent =
-              submissions.filter(s => s.decision === 'Approved').length;
+              submissions.filter(s => (s.decision || '').toLowerCase() === 'approved').length;
             document.getElementById('rejectedCount').textContent =
-              submissions.filter(s => s.decision === 'Rejected').length;
+              submissions.filter(s => (s.decision || '').toLowerCase() === 'rejected').length;
             document.getElementById('timedCount').textContent =
-              submissions.filter(s => s.decision === 'Timed').length;
+              submissions.filter(s => (s.decision || '').toLowerCase() === 'timed').length;
           }
 
           // Render submissions
@@ -884,58 +1036,59 @@
                   submissionsList.innerHTML = `
                     <div class="empty-state">
                       <h3>No submissions found</h3>
-                      <p>Try adjusting your search criteria or check back later for new submissions.</p>
-                    </div>
-                  `;
+                      <p>Try adjusting your search criteria or check back later.</p>
+                    </div>`;
                   return;
               }
 
               submissionsList.innerHTML = filteredSubmissions
                 .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                .map((submission, index) => `
-                    <div class="submission-card ${submission.decision.toLowerCase()}">
+                .map(submission => `
+                    <div class="submission-card ${(submission.decision || '').toLowerCase()}">
                       <div class="submission-header">
                         <h3>${submission.appName} <span>${submission.changeNo}</span></h3>
                         <div class="submission-meta">
                           <span>${submission.approverName}</span>
-                          <span>${submission.approverEmail || 'N/A'}</span>
+                          <span>${submission.approverEmail}</span>
                           <span>${new Date(submission.timestamp).toLocaleString()}</span>
                         </div>
-                        <span class="status-badge status-${submission.decision.toLowerCase()}">
+                        <span class="status-badge status-${(submission.decision || '').toLowerCase()}">
                           ${submission.decision}
                         </span>
                       </div>
-                      ${submission.comments || submission.decision === 'Timed' ? `
+                      ${(submission.comments || (submission.decision || '').toLowerCase() === 'timed') ? `
                         <div class="comments-section">
-                          ${submission.decision === 'Timed' ? `<p>Time Window: ${new Date(submission.startTime).toLocaleString()} - ${new Date(submission.endTime).toLocaleString()}</p>` : ''}
+                          ${(submission.decision || '').toLowerCase() === 'timed'
+                              ? `<p>Time Window: ${submission.startTime ? new Date(submission.startTime).toLocaleString() : 'N/A'} - ${submission.endTime ? new Date(submission.endTime).toLocaleString() : 'N/A'}</p>`
+                              : ''}
                           ${submission.comments ? `<p>Comments: ${submission.comments}</p>` : ''}
                         </div>` : ''}
                     </div>
                 `).join('');
           }
 
-          // Search and filter
+          // Search + filter
           const searchInput = document.getElementById('searchInput');
           const statusFilter = document.getElementById('statusFilter');
 
           function filterSubmissions() {
-              const searchTerm = searchInput.value.toLowerCase();
-              const statusValue = statusFilter.value.toLowerCase();
+              const searchTerm = (searchInput.value || '').toLowerCase();
+              const statusValue = (statusFilter.value || '').toLowerCase();
 
               let filtered = submissions;
 
               if (searchTerm) {
                   filtered = filtered.filter(s =>
-                      s.appName.toLowerCase().includes(searchTerm) ||
-                      s.changeNo.toLowerCase().includes(searchTerm) ||
-                      s.approverName.toLowerCase().includes(searchTerm) ||
-                      (s.approverEmail && s.approverEmail.toLowerCase().includes(searchTerm)) ||
-                      (s.comments && s.comments.toLowerCase().includes(searchTerm))
+                      (s.appName || '').toLowerCase().includes(searchTerm) ||
+                      (s.changeNo || '').toLowerCase().includes(searchTerm) ||
+                      (s.approverName || '').toLowerCase().includes(searchTerm) ||
+                      (s.approverEmail || '').toLowerCase().includes(searchTerm) ||
+                      (s.comments || '').toLowerCase().includes(searchTerm)
                   );
               }
 
               if (statusValue) {
-                  filtered = filtered.filter(s => s.decision.toLowerCase() === statusValue);
+                  filtered = filtered.filter(s => (s.decision || '').toLowerCase() === statusValue);
               }
 
               renderSubmissions(filtered);
@@ -949,6 +1102,7 @@
           updateStatistics();
       });
     </script>
+
 
   </body>
 </html>

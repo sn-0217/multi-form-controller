@@ -1,9 +1,6 @@
 package com.multiform.app.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,7 +9,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Data
@@ -24,9 +23,10 @@ public class Users implements UserDetails {
     private Long id;
     private String username;
     private String password;
-    private String role;
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
-    public Users(String username, String password, String role){
+    public Users(String username, String password, Role role){
         this.username = username;
         this.password = password;
         this.role = role;
@@ -35,7 +35,12 @@ public class Users implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role));
+        Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + role.name()));
+//        authorities.add(new SimpleGrantedAuthority(role.name()));
+        authorities.addAll(role.getPermissions().stream().map(permissions -> new SimpleGrantedAuthority(permissions.name())).collect(Collectors.toSet()));
+//        return List.of(new SimpleGrantedAuthority(role));
+        return authorities;
     }
 
     @Override

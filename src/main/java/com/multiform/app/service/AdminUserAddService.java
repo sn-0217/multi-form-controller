@@ -1,5 +1,6 @@
 package com.multiform.app.service;
 
+import com.multiform.app.entity.Role;
 import com.multiform.app.entity.Users;
 import com.multiform.app.repository.UserDetailsRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -16,9 +17,9 @@ public class AdminUserAddService {
     public CommandLineRunner createAdminUser(UserDetailsRepository userDetailsRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             List<Users> myUsers = List.of(
-                    new Users("admin", passwordEncoder.encode("admin"), "ROLE_ADMIN"),
-                    new Users("sn", passwordEncoder.encode("sn"), "ROLE_ADMIN"),
-                    new Users("santhu", passwordEncoder.encode("santhu"), "ROLE_ADMIN")
+                    new Users("admin", passwordEncoder.encode("admin"), Role.ADMIN),
+                    new Users("sn", passwordEncoder.encode("sn"), Role.USER),
+                    new Users("santhu", passwordEncoder.encode("santhu"), Role.USER)
             );
 
             myUsers.forEach(user -> {

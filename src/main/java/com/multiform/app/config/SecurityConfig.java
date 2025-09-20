@@ -1,10 +1,13 @@
 package com.multiform.app.config;
 
+import com.multiform.app.entity.Permissions;
+import com.multiform.app.entity.Role;
 import com.multiform.app.filters.JWTAuthFilter;
 import com.multiform.app.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -39,9 +42,12 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/webjars/**",
-                                "/api/**",
                                 "/authenticate"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/apps/**").hasAuthority(Permissions.WEATHER_WRITE.name())
+                        .requestMatchers(HttpMethod.GET, "/api/apps/**").hasAuthority(Permissions.WEATHER_READ.name())
+                        .requestMatchers(HttpMethod.DELETE, "/api/apps/**").hasAuthority(Permissions.WEATHER_DELETE.name()
+                        )
                         .anyRequest().authenticated()                   // everything else requires auth
                 )
                 .httpBasic(Customizer.withDefaults());
